@@ -81,13 +81,32 @@ def get_cv_best_params(results, metric="r_xy_n_sb", verbose=False, params_as_dic
     num_splits = len(results)
     animals = list(results[0].keys())
     parameters = list(results[0][animals[0]].keys())
-    exemplar_result = results[0][animals[0]][parameters[0]]["test"][metric]
-    assert exemplar_result.ndim == 3  # trials x num_cv_train_test_splits x units
-    res_xarray = isinstance(exemplar_result, xr.DataArray)
+    split_skip = []
+    for s in range(num_splits):
+        skip = False
+        for a in animals:
+            curr_res = results[s][a][parameters[0]]["test"][metric]
+            if isinstance(curr_res, list) and (curr_res == []):
+                skip |= True
+            else:
+                skip &= False
+        if skip:
+            split_skip.append(s)
+    assert len(split_skip) < num_splits
+    for s in range(num_splits):
+        if s not in split_skip:
+            exemplar_result = results[s][animals[0]][parameters[0]]["test"][metric]
+            assert (
+                exemplar_result.ndim == 3
+            )  # trials x num_cv_train_test_splits x units
+            res_xarray = isinstance(exemplar_result, xr.DataArray)
 
     map_kwargs = []
     # for every train/test split, we find the best cross validated parameters
     for s in range(num_splits):
+        if s in split_skip:
+            map_kwargs.append(None)
+            continue
         best_res = -np.inf
         best_params = None
         for curr_param in parameters:

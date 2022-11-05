@@ -20,6 +20,10 @@ def sb_correction(r):
 
 
 def get_consistency_per_neuron(X, Y, X1, X2, Y1, Y2, metric="pearsonr"):
+    """
+    Note: "r_xy_n_sb" is the main consistency metric. The rest are its components
+    that are stored for convenience.
+    """
     if "rsa" in metric:
         dim_val = 2
     else:
@@ -53,11 +57,10 @@ def get_consistency_per_neuron(X, Y, X1, X2, Y1, Y2, metric="pearsonr"):
 def get_linregress_consistency_persplit(
     X, Y, X1, X2, Y1, Y2, map_kwargs, train_idx, test_idx, metric="pearsonr",
 ):
-    """
-    Note: "r_xy_n_sb" is the main consistency metric. The rest are its components
-    that are stored for convenience.
-    """
     assert "rsa" not in metric
+    if map_kwargs is None:
+        return
+
     sphalf_input_checker(X=X, Y=Y, X1=X1, X2=X2, Y1=Y1, Y2=Y2)
 
     reg_metrics = {
