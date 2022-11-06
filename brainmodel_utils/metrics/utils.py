@@ -158,3 +158,10 @@ def get_splithalves(M, seed):
         ri1 = ri[:sphf_n_rep]
         ri2 = ri[sphf_n_rep:]
         return generic_trial_avg(M[ri1]), generic_trial_avg(M[ri2])
+
+def agg_results(res, mode="test", metric="r_xy_n_sb"):
+    agg_res = xr.concat([res[a][mode][metric] for a in res.keys()], dim="units")
+    assert agg_res.ndim == 3
+    agg_res = agg_res.mean(dim="trial_bootstrap_iters")
+    agg_res = agg_res.mean(dim="train_test_splits")
+    return agg_res.median(dim="units", skipna=True).data, sem(agg_res.data, nan_policy="omit")
