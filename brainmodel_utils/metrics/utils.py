@@ -186,8 +186,7 @@ def xr_concat_trialalign(results_list):
         if res_idx == 0:
             agg_res = res
         else:
-            # pad any trials that are less than the running maximum within session,
-            # to concatenate across units within an animal
+            # pad any trials that are less than the running maximum
             prev_num_trials = len(agg_res.trial_bootstrap_iters)
             curr_num_trials = len(res.trial_bootstrap_iters)
             if prev_num_trials < curr_num_trials:
@@ -199,7 +198,7 @@ def xr_concat_trialalign(results_list):
                 pad_num_trials = prev_num_trials - curr_num_trials
                 res = template_pad_trials(template=res, pad_num_trials=pad_num_trials)
 
-            # check stimuli are all aligned before concat
+            # check splits are all aligned before concat
             assert xr.DataArray.equals(agg_res.train_test_splits, res.train_test_splits)
             # concatenate across units, since stimuli and trials are lined up
             agg_res = xr.concat([agg_res, res], dim="units")
