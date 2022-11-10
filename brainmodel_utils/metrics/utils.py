@@ -178,6 +178,7 @@ def template_pad_trials(template, pad_num_trials):
     template_resp = xr.concat([template, pad_resp], dim="trial_bootstrap_iters")
     return template_resp
 
+
 def xr_concat_trialalign(results_list):
     for res_idx, res in enumerate(results_list):
         assert isinstance(res, xr.DataArray)
@@ -196,17 +197,14 @@ def xr_concat_trialalign(results_list):
                 )
             elif curr_num_trials < prev_num_trials:
                 pad_num_trials = prev_num_trials - curr_num_trials
-                res = template_pad_trials(
-                    template=res, pad_num_trials=pad_num_trials
-                )
+                res = template_pad_trials(template=res, pad_num_trials=pad_num_trials)
 
             # check stimuli are all aligned before concat
             assert xr.DataArray.equals(agg_res.train_test_splits, res.train_test_splits)
             # concatenate across units, since stimuli and trials are lined up
-            agg_res = xr.concat(
-                [agg_res, res], dim="units"
-            )
+            agg_res = xr.concat([agg_res, res], dim="units")
     return agg_res
+
 
 def agg_results(res, mode="test", metric="r_xy_n_sb"):
     """Helper function to aggregate results across units, and report statistics across them"""
