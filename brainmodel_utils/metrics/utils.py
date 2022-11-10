@@ -161,8 +161,56 @@ def get_splithalves(M, seed):
         return generic_trial_avg(M[ri1]), generic_trial_avg(M[ri2])
 
 
+def template_pad_trials(template, pad_num_trials):
+    assert isinstance(template, xr.DataArray)
+    template_num_trials = len(template.trial_bootstrap_iters)
+    # initialize nan array with this many copies of the template
+    # to ensure we can subselect that many trials later
+    num_rounds = (pad_num_trials // template_num_trials) + 1
+    pad_resp_list = []
+    for _ in range(num_rounds):
+        curr_pad_resp = xr.zeros_like(template) + np.nan
+        pad_resp_list.append(curr_pad_resp)
+    pad_resp = xr.concat(pad_resp_list, dim="trial_bootstrap_iters")
+    # subselect exactly how many trials we need
+    pad_resp = pad_resp.isel(trial_bootstrap_iters=range(pad_num_trials))
+    # concatenate this with the original template and return
+    template_resp = xr.concat([template, pad_resp], dim="trial_bootstrap_iters")
+    return template_resp
+
+def xr_concat_trialalign(results_list):
+    for res_idx, res in enumerate(results_list):
+        assert isinstance(res, xr.DataArray)
+        assert res.ndim == 3
+        if res_idx == 0:
+            agg_res = res
+        else:
+            # pad any trials that are less than the running maximum within session,
+            # to concatenate across units within an animal
+            prev_num_trials = len(agg_res.trial_bootstrap_iters)
+            curr_num_trials = len(res.trial_bootstrap_iters)
+            if prev_num_trials < curr_num_trials:
+                pad_num_trials = curr_num_trials - prev_num_trials
+                agg_res = template_pad_trials(
+                    template=agg_res, pad_num_trials=pad_num_trials
+                )
+            elif curr_num_trials < prev_num_trials:
+                pad_num_trials = prev_num_trials - curr_num_trials
+                res = template_pad_trials(
+                    template=res, pad_num_trials=pad_num_trials
+                )
+
+            # check stimuli are all aligned before concat
+            assert xr.DataArray.equals(agg_res.train_test_splits, res.train_test_splits)
+            # concatenate across units, since stimuli and trials are lined up
+            agg_res = xr.concat(
+                [agg_res, res], dim="units"
+            )
+    return agg_res
+
 def agg_results(res, mode="test", metric="r_xy_n_sb"):
-    agg_res = xr.concat([res[a][mode][metric] for a in res.keys()], dim="units")
+    """Helper function to aggregate results across units, and report statistics across them"""
+    agg_res = xr_concat_trialalign([res[a][mode][metric] for a in res.keys()])
     assert agg_res.ndim == 3
     agg_res = agg_res.mean(dim="trial_bootstrap_iters")
     agg_res = agg_res.mean(dim="train_test_splits")
