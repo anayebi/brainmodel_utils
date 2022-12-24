@@ -30,7 +30,6 @@ class FeatureExtractor:
             self.layer_feats.append(out)
 
     def extract_features(self, model, model_layer):
-        assert isinstance(model_layer, str)
         if model_layer != "inputs":
             if torch.cuda.is_available():
                 model.cuda().eval()
@@ -39,6 +38,10 @@ class FeatureExtractor:
         else:
             assert model is None
         self.layer_feats = list()
+        if model_layer != "inputs":
+            # Set up forward hook to extract features
+            handle = model_layer.register_forward_hook(self._store_features)
+
         with torch.no_grad():
             for i, x in enumerate(self.dataloader):
                 if i == self.n_batches:
@@ -49,23 +52,19 @@ class FeatureExtractor:
                     x = x.cuda()
 
                 if model_layer == "inputs":
-                    out = x.cpu().numpy()
-                    assert out.ndim == 4
-                    if out.shape[1] == 3:
-                        out = np.transpose(out, axes=(0, 2, 3, 1))
-                    else:
-                        assert out.shape[-1] == 3
+                    self._store_features(layer=None, inp=None, out=x)
                 else:
                     model(x)
-                    out = model.layers[model_layer]
-
-                if not isinstance(out, np.ndarray):
-                    out = out.cpu().numpy()
-
-                if self.vectorize:
-                    self.layer_feats.append(np.reshape(out, (len(out), -1)))
-                else:
-                    self.layer_feats.append(out)
 
         self.layer_feats = np.concatenate(self.layer_feats)
+        if model_layer == "inputs":
+            assert self.layer_feats.ndim == 4
+            if self.layer_feats.shape[1] == 3:
+                self.layer_feats = np.transpose(self.layer_feats, axes=(0, 2, 3, 1))
+            else:
+                assert self.layer_feats.shape[-1] == 3
+        else:
+            # Reset forward hook so next time function runs, previous hooks are removed
+            handle.remove()
+
         return self.layer_feats
