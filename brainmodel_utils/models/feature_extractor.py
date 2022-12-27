@@ -49,20 +49,27 @@ class FeatureExtractor:
 
                 print(f"Step {i+1}/{self.n_batches}")
                 if torch.cuda.is_available():
-                    x = x.cuda()
+                    if isinstance(x, dict):
+                        for k,v in x.items():
+                            x[k] = v.cuda()
+                    else:
+                        x = x.cuda()
 
                 if model_layer == "inputs":
+                    assert not isinstance(x, dict)
                     self._store_features(layer=None, inp=None, out=x)
                 else:
                     model(x)
 
         self.layer_feats = np.concatenate(self.layer_feats)
         if model_layer == "inputs":
+            # batch x h x w x channels (or batch x channels x h x w)
             assert self.layer_feats.ndim == 4
+            # make it channels last if originally channels first
             if self.layer_feats.shape[1] == 3:
                 self.layer_feats = np.transpose(self.layer_feats, axes=(0, 2, 3, 1))
-            else:
-                assert self.layer_feats.shape[-1] == 3
+
+            assert self.layer_feats.shape[-1] == 3
         else:
             # Reset forward hook so next time function runs, previous hooks are removed
             handle.remove()
