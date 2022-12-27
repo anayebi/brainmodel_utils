@@ -57,6 +57,7 @@ class DictArrayDataset(data.Dataset):
     def __len__(self):
         return self.n_elements
 
+
 def _acquire_data_loader(dataset, batch_size, shuffle, num_workers, pin_memory=True):
     assert isinstance(dataset, data.Dataset)
     loader = data.DataLoader(
@@ -104,6 +105,7 @@ def get_image_array_dataloader(
     )
     return dataloader
 
+
 def get_dict_array_dataloader(
     dict_array,
     array_transforms=None,
@@ -124,9 +126,7 @@ def get_dict_array_dataloader(
     if (array_transforms is not None) and isinstance(array_transforms, list):
         t = transforms.Compose(array_transforms)
 
-    dataset = DictArrayDataset(
-        dict_array=dict_array, t=t
-    )
+    dataset = DictArrayDataset(dict_array=dict_array, t=t)
     dataloader = _acquire_data_loader(
         dataset=dataset,
         batch_size=batch_size,

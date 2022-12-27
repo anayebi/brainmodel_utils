@@ -29,7 +29,7 @@ class FeatureExtractor:
         else:
             self.layer_feats.append(out)
 
-    def extract_features(self, model, model_layer):
+    def extract_features(self, model, model_layer, agg_func=np.concatenate, axis=0):
         if model_layer != "inputs":
             if torch.cuda.is_available():
                 model.cuda().eval()
@@ -50,7 +50,7 @@ class FeatureExtractor:
                 print(f"Step {i+1}/{self.n_batches}")
                 if torch.cuda.is_available():
                     if isinstance(x, dict):
-                        for k,v in x.items():
+                        for k, v in x.items():
                             x[k] = v.cuda()
                     else:
                         x = x.cuda()
@@ -61,7 +61,7 @@ class FeatureExtractor:
                 else:
                     model(x)
 
-        self.layer_feats = np.concatenate(self.layer_feats)
+        self.layer_feats = agg_func(self.layer_feats, axis=axis)
         if model_layer == "inputs":
             # batch x h x w x channels (or batch x channels x h x w)
             assert self.layer_feats.ndim == 4
