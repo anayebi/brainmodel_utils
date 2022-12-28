@@ -29,7 +29,14 @@ class FeatureExtractor:
         else:
             self.layer_feats.append(out)
 
-    def extract_features(self, model, model_layer, agg_func=np.concatenate, axis=0):
+    def extract_features(
+        self,
+        model,
+        model_layer,
+        agg_func=np.concatenate,
+        axis=0,
+        custom_attr_name="layers",
+    ):
         if model_layer != "inputs":
             if torch.cuda.is_available():
                 model.cuda().eval()
@@ -37,8 +44,9 @@ class FeatureExtractor:
                 model.cpu().eval()
         else:
             assert model is None
+
         self.layer_feats = list()
-        if model_layer != "inputs":
+        if (model_layer != "inputs") and (not hasattr(model, custom_attr_name)):
             # Set up forward hook to extract features
             handle = model_layer.register_forward_hook(self._store_features)
 
@@ -60,6 +68,9 @@ class FeatureExtractor:
                     self._store_features(layer=None, inp=None, out=x)
                 else:
                     model(x)
+                    if hasattr(model, custom_attr_name):
+                        out = getattr(model, custom_attr_name)[model_layer]
+                        self._store_features(layer=None, inp=None, out=out)
 
         self.layer_feats = agg_func(self.layer_feats, axis=axis)
         if model_layer == "inputs":
@@ -70,7 +81,7 @@ class FeatureExtractor:
                 self.layer_feats = np.transpose(self.layer_feats, axes=(0, 2, 3, 1))
 
             assert self.layer_feats.shape[-1] == 3
-        else:
+        elif not hasattr(model, custom_attr_name):
             # Reset forward hook so next time function runs, previous hooks are removed
             handle.remove()
 
