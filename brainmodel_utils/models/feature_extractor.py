@@ -4,6 +4,7 @@ from ptutils.core.utils import set_seed
 from ptutils.models.utils import load_model, load_model_layer
 from brainmodel_utils.models import dataloader_utils as dataloaders
 
+
 class FeatureExtractor:
     """
     Extracts activations from a given layer of a model.
@@ -15,8 +16,15 @@ class FeatureExtractor:
         vectorize  : (boolean) whether to convert layer features into vector
     """
 
-    def __init__(self, dataloader, n_batches=None, vectorize=False,
-                 agg_func=np.concatenate, agg_axis=0, custom_attr_name="layers"):
+    def __init__(
+        self,
+        dataloader,
+        n_batches=None,
+        vectorize=False,
+        agg_func=np.concatenate,
+        agg_axis=0,
+        custom_attr_name="layers",
+    ):
         self.dataloader = dataloader
         if n_batches is None:
             self.n_batches = len(self.dataloader)
@@ -37,9 +45,7 @@ class FeatureExtractor:
             self.layer_feats.append(out)
 
     def extract_features(
-        self,
-        model,
-        model_layer,
+        self, model, model_layer,
     ):
         if model_layer != "inputs":
             if torch.cuda.is_available():
@@ -97,18 +103,22 @@ class ModelFeaturesPipeline:
     Pipeline for extracting model features at a given layer.
     Starts from the model name, to loading the dataloader, to calling the FeatureExtractor object.
     """
-    def __init__(self,
-                 model_name,
-                 model_path,
-                 dataloader_name,
-                 dataloader_transforms,
-                 model_kwargs={},
-                 model_loader_kwargs={},
-                 model_layer_kwargs={},
-                 dataloader_kwargs={},
-                 feature_extractor_kwargs={"vectorize": True},
-                 seed=0,
-                 verbose=False):
+
+    def __init__(
+        self,
+        model_name,
+        model_path,
+        dataloader_name,
+        dataloader_transforms,
+        model_layers=None,
+        model_kwargs={},
+        model_loader_kwargs={},
+        model_layer_kwargs={},
+        dataloader_kwargs={},
+        feature_extractor_kwargs={"vectorize": True},
+        seed=0,
+        verbose=False,
+    ):
 
         self.model_path = model_path
         self.dataloader_name = dataloader_name
@@ -125,10 +135,15 @@ class ModelFeaturesPipeline:
             self.model_name = model_name
         assert isinstance(self.model_name, str)
 
-        assert "trained" not in self.model_loader_kwargs.keys()
-        assert "model_path" not in self.model_loader_kwargs.keys()
+        assert "trained" not in model_loader_kwargs.keys()
+        assert "model_path" not in model_loader_kwargs.keys()
+        self.model_loader_kwargs = model_loader_kwargs
         self.model_loader_kwargs["trained"] = self.trained
         self.model_loader_kwargs["model_path"] = self.model_path
+
+        if isinstance(model_layers, str):
+            model_layers = [model_layers]
+        self.model_layers = model_layers
 
         self.dataloader_kwargs = dataloader_kwargs
         self.feature_extractor_kwargs = feature_extractor_kwargs
@@ -140,8 +155,9 @@ class ModelFeaturesPipeline:
         raise NotImplementedError
 
     def _load_model_from_name(self):
-        model = self._get_model_func_from_name(model_name=self.model_name,
-                                               model_kwargs=self.model_kwargs)
+        model = self._get_model_func_from_name(
+            model_name=self.model_name, model_kwargs=self.model_kwargs
+        )
         self.model = load_model(model=model, **self.model_loader_kwargs)
 
     def _get_model_layers_list(self, model_name, model_kwargs):
@@ -151,8 +167,9 @@ class ModelFeaturesPipeline:
     def _load_layer_from_name(self, model_layer):
         """This function returns the layer module based on its name,
         to be used by the feature extractor"""
-        return load_model_layer(model=self.model, model_layer=model_layer,
-                                **self.model_layer_kwargs)
+        return load_model_layer(
+            model=self.model, model_layer=model_layer, **self.model_layer_kwargs
+        )
 
     def _postproc_features(self, features):
         pass
@@ -162,20 +179,26 @@ class ModelFeaturesPipeline:
         set_seed(self.seed)
 
         self._load_model_from_name()
-        self.dataloader = dataloaders.__dict__[self.dataloader_name](stimuli,
-                                                                     dataloader_transforms=self.dataloader_transforms,
-                                                                     **self.dataloader_kwargs)
+        self.dataloader = dataloaders.__dict__[self.dataloader_name](
+            stimuli,
+            dataloader_transforms=self.dataloader_transforms,
+            **self.dataloader_kwargs,
+        )
 
-        self.feature_extractor = FeatureExtractor(dataloader=self.dataloader,
-                                                  **self.feature_extractor_kwargs)
+        self.feature_extractor = FeatureExtractor(
+            dataloader=self.dataloader, **self.feature_extractor_kwargs
+        )
 
-        layers_list = self._get_model_layers_list(model_name=self.model_name,
-                                                  model_kwargs=self.model_kwargs)
-        assert isinstance(layers_list, list)
+        if self.model_layers is None:
+            self.model_layers = self._get_model_layers_list(
+                model_name=self.model_name, model_kwargs=self.model_kwargs
+            )
+        assert isinstance(self.model_layers, list)
         layer_feats = dict()
-        for curr_layer_name in layers_list:
+        for curr_layer_name in self.model_layers:
             curr_layer_features = self.feature_extractor.extract_features(
-                model=self.model, model_layer=self._load_layer_from_name(curr_layer_name)
+                model=self.model,
+                model_layer=self._load_layer_from_name(curr_layer_name),
             )
             if self.verbose:
                 print(

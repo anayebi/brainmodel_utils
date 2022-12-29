@@ -4,6 +4,7 @@ from torch.utils import data
 
 __all__ = ["get_dict_array_dataloader", "get_image_array_dataloader"]
 
+
 class ArrayDataset(data.Dataset):
     """
     General dataset constructor using an array of images.
