@@ -85,7 +85,7 @@ class FeatureExtractor:
                         self._store_features(layer=None, inp=None, out=out)
 
         self.layer_feats = self.agg_func(self.layer_feats, axis=self.agg_axis)
-        if model_layer == "inputs":
+        if model_layer == "inputs" and (not self.vectorize):
             # batch x h x w x channels (or batch x channels x h x w)
             assert self.layer_feats.ndim == 4
             # make it channels last if originally channels first
@@ -93,7 +93,7 @@ class FeatureExtractor:
                 self.layer_feats = np.transpose(self.layer_feats, axes=(0, 2, 3, 1))
 
             assert self.layer_feats.shape[-1] == 3
-        elif not hasattr(model, self.custom_attr_name):
+        elif (not hasattr(model, self.custom_attr_name)) and (model_layer != "inputs"):
             # Reset forward hook so next time function runs, previous hooks are removed
             handle.remove()
 
@@ -128,7 +128,8 @@ class ModelFeaturesPipeline:
         self.model_kwargs = copy.deepcopy(model_kwargs)
         self.model_layer_kwargs = copy.deepcopy(model_layer_kwargs)
 
-        assert isinstance(model_name, str)
+        if model_name is not None:
+            assert isinstance(model_name, str)
         self.model_name, self.trained = get_base_model_name(model_name)
         if self.trained:
             assert self.model_path is not None
