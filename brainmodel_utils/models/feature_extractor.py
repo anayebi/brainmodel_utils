@@ -116,7 +116,6 @@ class ModelFeaturesPipeline:
         model_layer_kwargs={},
         dataloader_kwargs={},
         feature_extractor_kwargs={"vectorize": True},
-        postproc_kwargs={},
         seed=0,
         verbose=False,
     ):
@@ -145,7 +144,6 @@ class ModelFeaturesPipeline:
 
         self.dataloader_kwargs = dataloader_kwargs
         self.feature_extractor_kwargs = feature_extractor_kwargs
-        self.postproc_kwargs = postproc_kwargs
         self.seed = seed
         self.verbose = verbose
 
@@ -173,7 +171,7 @@ class ModelFeaturesPipeline:
     def _postproc_features(self, features, **kwargs):
         pass
 
-    def get_model_features(self, stimuli):
+    def get_model_features(self, stimuli, **kwargs):
         # setting seed for untrained models
         set_seed(self.seed)
 
@@ -207,7 +205,7 @@ class ModelFeaturesPipeline:
                 print(
                     f"Current layer: {curr_layer_name}, Activations of shape: {curr_layer_features.shape}"
                 )
-            curr_layer_features = self._postproc_features(curr_layer_features, **self.postproc_kwargs)
+            curr_layer_features = self._postproc_features(curr_layer_features, **kwargs)
             layer_feats[curr_layer_name] = curr_layer_features
 
         return layer_feats
