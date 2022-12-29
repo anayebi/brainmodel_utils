@@ -2,6 +2,7 @@ import numpy as np
 from torchvision import transforms
 from torch.utils import data
 
+__all__ = ["get_dict_array_dataloader", "get_image_array_dataloader"]
 
 class ArrayDataset(data.Dataset):
     """
@@ -72,7 +73,7 @@ def _acquire_data_loader(dataset, batch_size, shuffle, num_workers, pin_memory=T
 
 def get_image_array_dataloader(
     image_array,
-    image_transforms=None,
+    dataloader_transforms=None,
     batch_size=256,
     shuffle=False,
     num_workers=8,
@@ -81,20 +82,20 @@ def get_image_array_dataloader(
     """
     Inputs: 
         image_array   : (numpy.ndarray) (N, H, W, 3)
-        image_transforms : (torchvision.transforms) instance for image transformations
+        dataloader_transforms : (torchvision.transforms) instance for image transformations
     Outputs:
         dataloader  : (torch.utils.data.DataLoader) for the image array
     """
 
-    if image_transforms is None:
+    if dataloader_transforms is None:
         # normalize between 0 and 1 at a minimum
-        image_transforms = [transforms.ToTensor()]
-    if not isinstance(image_transforms, list):
-        image_transforms = [image_transforms]
-    image_transforms = [transforms.ToPILImage()] + image_transforms
+        dataloader_transforms = [transforms.ToTensor()]
+    if not isinstance(dataloader_transforms, list):
+        dataloader_transforms = [dataloader_transforms]
+    dataloader_transforms = [transforms.ToPILImage()] + dataloader_transforms
 
     dataset = ArrayDataset(
-        image_array=image_array, t=transforms.Compose(image_transforms)
+        image_array=image_array, t=transforms.Compose(dataloader_transforms)
     )
     dataloader = _acquire_data_loader(
         dataset=dataset,
@@ -108,7 +109,7 @@ def get_image_array_dataloader(
 
 def get_dict_array_dataloader(
     dict_array,
-    array_transforms=None,
+    dataloader_transforms=None,
     batch_size=256,
     shuffle=False,
     num_workers=8,
@@ -117,14 +118,14 @@ def get_dict_array_dataloader(
     """
     Inputs:
         dict_array   : dictionary of numpy arrays
-        array_transforms : either a list of or a single (torchvision.transforms) instance for transformations
+        dataloader_transforms : either a list of or a single (torchvision.transforms) instance for transformations
     Outputs:
         dataloader  : (torch.utils.data.DataLoader) for the image array
     """
 
-    t = array_transforms
-    if (array_transforms is not None) and isinstance(array_transforms, list):
-        t = transforms.Compose(array_transforms)
+    t = dataloader_transforms
+    if (dataloader_transforms is not None) and isinstance(dataloader_transforms, list):
+        t = transforms.Compose(dataloader_transforms)
 
     dataset = DictArrayDataset(dict_array=dict_array, t=t)
     dataloader = _acquire_data_loader(
