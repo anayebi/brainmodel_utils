@@ -154,6 +154,9 @@ class ModelFeaturesPipeline:
         return load_model_layer(model=self.model, model_layer=model_layer,
                                 **self.model_layer_kwargs)
 
+    def _postproc_features(self, features):
+        pass
+
     def get_model_features(self, stimuli):
         # setting seed for untrained models
         set_seed(self.seed)
@@ -178,6 +181,7 @@ class ModelFeaturesPipeline:
                 print(
                     f"Current layer: {curr_layer_name}, Activations of shape: {curr_layer_features.shape}"
                 )
+            curr_layer_features = self._postproc_features(curr_layer_features)
             layer_feats[curr_layer_name] = curr_layer_features
 
         return layer_feats
