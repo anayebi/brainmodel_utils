@@ -1,9 +1,11 @@
+import copy
 import numpy as np
 import torch
 from ptutils.core.utils import set_seed
 from ptutils.models.utils import load_model, load_model_layer
 from brainmodel_utils.models import dataloader_utils as dataloaders
 from brainmodel_utils.models.utils import get_base_model_name
+
 
 class FeatureExtractor:
     """
@@ -123,8 +125,8 @@ class ModelFeaturesPipeline:
         self.model_path = model_path
         self.dataloader_name = dataloader_name
         self.dataloader_transforms = dataloader_transforms
-        self.model_kwargs = model_kwargs
-        self.model_layer_kwargs = model_layer_kwargs
+        self.model_kwargs = copy.deepcopy(model_kwargs)
+        self.model_layer_kwargs = copy.deepcopy(model_layer_kwargs)
 
         assert isinstance(model_name, str)
         self.model_name, self.trained = get_base_model_name(model_name)
@@ -134,7 +136,7 @@ class ModelFeaturesPipeline:
             assert self.model_path is None
         assert "trained" not in model_loader_kwargs.keys()
         assert "model_path" not in model_loader_kwargs.keys()
-        self.model_loader_kwargs = model_loader_kwargs
+        self.model_loader_kwargs = copy.deepcopy(model_loader_kwargs)
         self.model_loader_kwargs["trained"] = self.trained
         self.model_loader_kwargs["model_path"] = self.model_path
 
@@ -142,8 +144,8 @@ class ModelFeaturesPipeline:
             model_layers = [model_layers]
         self.model_layers = model_layers
 
-        self.dataloader_kwargs = dataloader_kwargs
-        self.feature_extractor_kwargs = feature_extractor_kwargs
+        self.dataloader_kwargs = copy.deepcopy(dataloader_kwargs)
+        self.feature_extractor_kwargs = copy.deepcopy(feature_extractor_kwargs)
         self.seed = seed
         self.verbose = verbose
 
@@ -199,7 +201,9 @@ class ModelFeaturesPipeline:
         for curr_layer_name in self.model_layers:
             curr_layer_features = self.feature_extractor.extract_features(
                 model=self.model if curr_layer_name != "inputs" else None,
-                model_layer=self._load_layer_from_name(curr_layer_name) if curr_layer_name != "inputs" else "inputs",
+                model_layer=self._load_layer_from_name(curr_layer_name)
+                if curr_layer_name != "inputs"
+                else "inputs",
             )
             if self.verbose:
                 print(
