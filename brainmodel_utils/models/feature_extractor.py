@@ -3,7 +3,7 @@ import torch
 from ptutils.core.utils import set_seed
 from ptutils.models.utils import load_model, load_model_layer
 from brainmodel_utils.models import dataloader_utils as dataloaders
-
+from brainmodel_utils.models.utils import get_base_model_name
 
 class FeatureExtractor:
     """
@@ -116,6 +116,7 @@ class ModelFeaturesPipeline:
         model_layer_kwargs={},
         dataloader_kwargs={},
         feature_extractor_kwargs={"vectorize": True},
+        postproc_kwargs={},
         seed=0,
         verbose=False,
     ):
@@ -125,16 +126,13 @@ class ModelFeaturesPipeline:
         self.dataloader_transforms = dataloader_transforms
         self.model_kwargs = model_kwargs
         self.model_layer_kwargs = model_layer_kwargs
-        if "untrained" == model_name.split("_")[0]:
-            assert self.model_path is None
-            self.trained = False
-            self.model_name = model_name[len("untrained") + 1 :]
-        else:
-            assert self.model_path is not None
-            self.trained = True
-            self.model_name = model_name
-        assert isinstance(self.model_name, str)
 
+        assert isinstance(model_name, str)
+        self.model_name, self.trained = get_base_model_name(model_name)
+        if self.trained:
+            assert self.model_path is not None
+        else:
+            assert self.model_path is None
         assert "trained" not in model_loader_kwargs.keys()
         assert "model_path" not in model_loader_kwargs.keys()
         self.model_loader_kwargs = model_loader_kwargs
@@ -147,6 +145,7 @@ class ModelFeaturesPipeline:
 
         self.dataloader_kwargs = dataloader_kwargs
         self.feature_extractor_kwargs = feature_extractor_kwargs
+        self.postproc_kwargs = postproc_kwargs
         self.seed = seed
         self.verbose = verbose
 
@@ -171,7 +170,7 @@ class ModelFeaturesPipeline:
             model=self.model, model_layer=model_layer, **self.model_layer_kwargs
         )
 
-    def _postproc_features(self, features):
+    def _postproc_features(self, features, **kwargs):
         pass
 
     def get_model_features(self, stimuli):
@@ -204,7 +203,7 @@ class ModelFeaturesPipeline:
                 print(
                     f"Current layer: {curr_layer_name}, Activations of shape: {curr_layer_features.shape}"
                 )
-            curr_layer_features = self._postproc_features(curr_layer_features)
+            curr_layer_features = self._postproc_features(curr_layer_features, **self.postproc_kwargs)
             layer_feats[curr_layer_name] = curr_layer_features
 
         return layer_feats
