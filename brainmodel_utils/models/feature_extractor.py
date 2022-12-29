@@ -148,6 +148,7 @@ class ModelFeaturesPipeline:
         self.feature_extractor_kwargs = copy.deepcopy(feature_extractor_kwargs)
         self.seed = seed
         self.verbose = verbose
+        self._load_model_from_name()
 
     def _get_model_func_from_name(self, model_name, model_kwargs):
         """Repo dependent function that returns the model function from the name"""
@@ -177,7 +178,6 @@ class ModelFeaturesPipeline:
         # setting seed for untrained models
         set_seed(self.seed)
 
-        self._load_model_from_name()
         self.dataloader = dataloaders.__dict__[self.dataloader_name](
             stimuli,
             dataloader_transforms=self.dataloader_transforms,
