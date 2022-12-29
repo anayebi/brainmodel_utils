@@ -193,11 +193,15 @@ class ModelFeaturesPipeline:
                 model_name=self.model_name, model_kwargs=self.model_kwargs
             )
         assert isinstance(self.model_layers, list)
+        if self.model is None:
+            # if there is no model function, then the only valid layers for it are the inputs
+            assert self.model_layers == ["inputs"]
+
         layer_feats = dict()
         for curr_layer_name in self.model_layers:
             curr_layer_features = self.feature_extractor.extract_features(
-                model=self.model,
-                model_layer=self._load_layer_from_name(curr_layer_name),
+                model=self.model if curr_layer_name != "inputs" else None,
+                model_layer=self._load_layer_from_name(curr_layer_name) if curr_layer_name != "inputs" else "inputs",
             )
             if self.verbose:
                 print(
