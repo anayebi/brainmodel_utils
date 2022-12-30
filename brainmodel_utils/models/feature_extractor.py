@@ -5,6 +5,7 @@ from ptutils.core.utils import set_seed
 from ptutils.models.utils import load_model, load_model_layer
 from brainmodel_utils.models import dataloader_utils as dataloaders
 from brainmodel_utils.models.utils import get_base_model_name
+from brainmodel_utils.core.uitls import convert_to_list
 
 
 class FeatureExtractor:
@@ -141,9 +142,7 @@ class ModelFeaturesPipeline:
         self.model_loader_kwargs["trained"] = self.trained
         self.model_loader_kwargs["model_path"] = self.model_path
 
-        if isinstance(model_layers, str):
-            model_layers = [model_layers]
-        self.model_layers = model_layers
+        self.model_layers = convert_to_list(model_layers)
 
         self.dataloader_kwargs = copy.deepcopy(dataloader_kwargs)
         self.feature_extractor_kwargs = copy.deepcopy(feature_extractor_kwargs)
