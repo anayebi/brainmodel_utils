@@ -27,6 +27,7 @@ def dict_np(d):
         assert isinstance(v, list)
         d[k] = np.array(v)
 
+
 def convert_to_list(inp):
     if not isinstance(inp, list):
         inp = [inp]

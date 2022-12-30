@@ -5,7 +5,7 @@ from ptutils.core.utils import set_seed
 from ptutils.models.utils import load_model, load_model_layer
 from brainmodel_utils.models import dataloader_utils as dataloaders
 from brainmodel_utils.models.utils import get_base_model_name
-from brainmodel_utils.core.uitls import convert_to_list
+from brainmodel_utils.core.utils import convert_to_list
 
 
 class FeatureExtractor:
