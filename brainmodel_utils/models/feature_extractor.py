@@ -142,7 +142,9 @@ class ModelFeaturesPipeline:
         self.model_loader_kwargs["trained"] = self.trained
         self.model_loader_kwargs["model_path"] = self.model_path
 
-        self.model_layers = convert_to_list(model_layers)
+        if isinstance(model_layers, str):
+            model_layers = convert_to_list(model_layers)
+        self.model_layers = model_layers
 
         self.dataloader_kwargs = copy.deepcopy(dataloader_kwargs)
         self.feature_extractor_kwargs = copy.deepcopy(feature_extractor_kwargs)
