@@ -17,6 +17,7 @@ class FeatureExtractor:
                      Normalize(), Resize(), etc.)
         n_batches  : (int) number of batches to obtain features
         vectorize  : (boolean) whether to convert layer features into vector
+        temporal  : (boolean) whether to keep a time dimension
     """
 
     def __init__(
@@ -27,6 +28,7 @@ class FeatureExtractor:
         agg_func=np.concatenate,
         agg_axis=0,
         custom_attr_name="layers",
+        temporal=False,
     ):
         self.dataloader = dataloader
         if n_batches is None:
@@ -34,6 +36,7 @@ class FeatureExtractor:
         else:
             self.n_batches = n_batches
         self.vectorize = vectorize
+        self.temporal = temporal
 
         self.agg_func = agg_func
         self.agg_axis = agg_axis
@@ -43,7 +46,10 @@ class FeatureExtractor:
         out = out.cpu().numpy()
 
         if self.vectorize:
-            self.layer_feats.append(np.reshape(out, (len(out), -1)))
+            if self.temporal:
+                self.layer_feats.append(np.reshape(out, (out.shape[0], out.shape[1], -1)))
+            else:
+                self.layer_feats.append(np.reshape(out, (out.shape[0], -1)))
         else:
             self.layer_feats.append(out)
 
@@ -87,11 +93,19 @@ class FeatureExtractor:
 
         self.layer_feats = self.agg_func(self.layer_feats, axis=self.agg_axis)
         if model_layer == "inputs" and (not self.vectorize):
+            desired_ndim = 4
+            axes = (0, 2, 3, 1)
+            chf_axis = 1
+            if self.temporal:
+                desired_ndim = 5
+                chf_axis = 2
+                axes = (0, 1, 3, 4, 2)
             # batch x h x w x channels (or batch x channels x h x w)
-            assert self.layer_feats.ndim == 4
+            # if self.temporal, it is batch x time x ...
+            assert self.layer_feats.ndim == desired_ndim
             # make it channels last if originally channels first
-            if self.layer_feats.shape[1] == 3:
-                self.layer_feats = np.transpose(self.layer_feats, axes=(0, 2, 3, 1))
+            if self.layer_feats.shape[chf_axis] == 3:
+                self.layer_feats = np.transpose(self.layer_feats, axes=axes)
 
             assert self.layer_feats.shape[-1] == 3
         elif (not hasattr(model, self.custom_attr_name)) and (model_layer != "inputs"):
