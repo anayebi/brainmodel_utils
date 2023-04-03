@@ -47,7 +47,9 @@ class FeatureExtractor:
 
         if self.vectorize:
             if self.temporal:
-                self.layer_feats.append(np.reshape(out, (out.shape[0], out.shape[1], -1)))
+                self.layer_feats.append(
+                    np.reshape(out, (out.shape[0], out.shape[1], -1))
+                )
             else:
                 self.layer_feats.append(np.reshape(out, (out.shape[0], -1)))
         else:

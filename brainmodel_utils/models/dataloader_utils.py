@@ -2,13 +2,19 @@ import numpy as np
 from torchvision import transforms
 from torch.utils import data
 
-__all__ = ["get_dict_array_dataloader", "get_image_array_dataloader", "get_generic_dataloader"]
+__all__ = [
+    "get_dict_array_dataloader",
+    "get_image_array_dataloader",
+    "get_generic_dataloader",
+]
+
 
 def compose_transforms(dataloader_transforms):
     if (dataloader_transforms is not None) and isinstance(dataloader_transforms, list):
         return transforms.Compose(dataloader_transforms)
     else:
         return dataloader_transforms
+
 
 class ArrayDataset(data.Dataset):
     """
@@ -129,7 +135,9 @@ def get_dict_array_dataloader(
         dataloader  : (torch.utils.data.DataLoader) for the image array
     """
 
-    dataset = DictArrayDataset(dict_array=dict_array, t=compose_transforms(dataloader_transforms))
+    dataset = DictArrayDataset(
+        dict_array=dict_array, t=compose_transforms(dataloader_transforms)
+    )
     dataloader = _acquire_data_loader(
         dataset=dataset,
         batch_size=batch_size,
@@ -139,12 +147,9 @@ def get_dict_array_dataloader(
     )
     return dataloader
 
+
 def get_generic_dataloader(
-    dataset,
-    batch_size=256,
-    shuffle=False,
-    num_workers=8,
-    pin_memory=True,
+    dataset, batch_size=256, shuffle=False, num_workers=8, pin_memory=True,
 ):
     """
     Inputs:
