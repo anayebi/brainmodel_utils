@@ -37,5 +37,4 @@ def get_model_layers_from_name(model_layers_dict, model_name):
     if base_model_name is None:
         return None
 
-    curr_dict_layers = model_layers_dict[base_model_name]
-    return curr_dict_layers
+    return model_layers_dict[base_model_name]
