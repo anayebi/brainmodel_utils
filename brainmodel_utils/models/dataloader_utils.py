@@ -1,19 +1,13 @@
 import numpy as np
 from torchvision import transforms
 from torch.utils import data
+from ptutils.model_training.trainer_transforms import compose_ifnot
 
 __all__ = [
     "get_dict_array_dataloader",
     "get_image_array_dataloader",
     "get_generic_dataloader",
 ]
-
-
-def compose_transforms(dataloader_transforms):
-    if (dataloader_transforms is not None) and isinstance(dataloader_transforms, list):
-        return transforms.Compose(dataloader_transforms)
-    else:
-        return dataloader_transforms
 
 
 class ArrayDataset(data.Dataset):
@@ -107,7 +101,7 @@ def get_image_array_dataloader(
     dataloader_transforms = [transforms.ToPILImage()] + dataloader_transforms
 
     dataset = ArrayDataset(
-        image_array=image_array, t=compose_transforms(dataloader_transforms)
+        image_array=image_array, t=compose_ifnot(dataloader_transforms)
     )
     dataloader = _acquire_data_loader(
         dataset=dataset,
@@ -136,7 +130,7 @@ def get_dict_array_dataloader(
     """
 
     dataset = DictArrayDataset(
-        dict_array=dict_array, t=compose_transforms(dataloader_transforms)
+        dict_array=dict_array, t=compose_ifnot(dataloader_transforms)
     )
     dataloader = _acquire_data_loader(
         dataset=dataset,
