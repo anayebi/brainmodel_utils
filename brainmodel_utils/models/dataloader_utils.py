@@ -7,6 +7,7 @@ __all__ = [
     "get_dict_array_dataloader",
     "get_image_array_dataloader",
     "get_generic_dataloader",
+    "get_passthrough_dataloader",
 ]
 
 
@@ -160,3 +161,9 @@ def get_generic_dataloader(
         pin_memory=pin_memory,
     )
     return dataloader
+
+def get_passthrough_dataloader(inputs, **kwargs):
+    # useful for batch size of 1 and temporal, when you have already processed inputs
+    # and inputs is the output of a function that wraps a generic dataloader already
+    return [inputs]
+
