@@ -10,6 +10,7 @@ def get_base_model_name(model_name):
 
     return base_model_name, trained
 
+
 def get_model_func_from_name(model_func_dict, model_name, model_kwargs={}):
     base_model_name, _ = get_base_model_name(model_name)
     if base_model_name is None:
@@ -17,7 +18,10 @@ def get_model_func_from_name(model_func_dict, model_name, model_kwargs={}):
 
     return model_func_dict[base_model_name](**model_kwargs)
 
-def get_model_transforms_from_name(model_transforms_dict, model_name, model_transforms_key="val"):
+
+def get_model_transforms_from_name(
+    model_transforms_dict, model_name, model_transforms_key="val"
+):
     base_model_name, _ = get_base_model_name(model_name)
     if base_model_name is None:
         return None
@@ -31,6 +35,7 @@ def get_model_path_from_name(model_paths_dict, model_name):
     if trained:
         model_path = model_paths_dict[base_model_name]
     return model_path
+
 
 def get_model_layers_from_name(model_layers_dict, model_name):
     base_model_name, _ = get_base_model_name(model_name)

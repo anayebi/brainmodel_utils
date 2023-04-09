@@ -162,8 +162,8 @@ def get_generic_dataloader(
     )
     return dataloader
 
+
 def get_passthrough_dataloader(inputs, **kwargs):
     # useful for batch size of 1 and temporal, when you have already processed inputs
     # and inputs is the output of a function that wraps a generic dataloader already
     return [inputs]
-
