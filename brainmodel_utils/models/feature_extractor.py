@@ -149,7 +149,12 @@ class ModelFeaturesPipeline:
             assert isinstance(model_name, str)
         self.model_name, self.trained = get_base_model_name(model_name)
         if self.trained:
-            assert self.model_path is not None
+            # sometimes model functions automatically load the model ckpt, so no model_path needs to be passed in
+            # in which case, we alert the user
+            if self.model_path is None:
+                print(
+                    "No model path was explictly passed in to this trained model via ModelFeaturesPipeline. If you meant to do this and didn't load the model checkpoint some other way (e.g. in the model func), then please cancel and retry!"
+                )
         else:
             assert self.model_path is None
         assert "trained" not in model_loader_kwargs.keys()
