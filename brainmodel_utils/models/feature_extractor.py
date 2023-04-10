@@ -97,16 +97,16 @@ class FeatureExtractor:
         if model_layer == "inputs" and (not self.vectorize):
             desired_ndim = 4
             axes = (0, 2, 3, 1)
-            chf_axis = 1
+            ch_axis = 1
             if self.temporal:
                 desired_ndim = 5
-                chf_axis = 2
+                ch_axis = 2
                 axes = (0, 1, 3, 4, 2)
             # batch x h x w x channels (or batch x channels x h x w)
             # if self.temporal, it is batch x time x ...
             assert self.layer_feats.ndim == desired_ndim
             # make it channels last if originally channels first
-            if self.layer_feats.shape[chf_axis] == 3:
+            if self.layer_feats.shape[ch_axis] == 3:
                 self.layer_feats = np.transpose(self.layer_feats, axes=axes)
 
             assert self.layer_feats.shape[-1] == 3
