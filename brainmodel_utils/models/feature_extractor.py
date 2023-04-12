@@ -221,6 +221,8 @@ class ModelFeaturesPipeline:
             assert self.model_layers == ["inputs"]
 
         layer_feats = dict()
+        # NOTE: for stochastic models, because we grab each layer sequentially, it requires calling the forward pass of the model each time
+        # so the layer outputs are each from different runs of the stochastic model
         for curr_layer_name in self.model_layers:
             curr_layer_features = self.feature_extractor.extract_features(
                 model=self.model if curr_layer_name != "inputs" else None,
