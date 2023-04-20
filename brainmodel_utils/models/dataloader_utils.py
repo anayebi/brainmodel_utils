@@ -144,7 +144,12 @@ def get_dict_array_dataloader(
 
 
 def get_generic_dataloader(
-    dataset, batch_size=256, shuffle=False, num_workers=8, pin_memory=True,
+    dataset,
+    dataloader_transforms=None,
+    batch_size=256,
+    shuffle=False,
+    num_workers=8,
+    pin_memory=True,
 ):
     """
     Inputs:
@@ -153,6 +158,9 @@ def get_generic_dataloader(
         dataloader  : (torch.utils.data.DataLoader) for the image array
     """
 
+    assert (
+        dataloader_transforms is None
+    )  # we only include this for legacy purposes, the dataset should take in transforms
     dataloader = _acquire_data_loader(
         dataset=dataset,
         batch_size=batch_size,
