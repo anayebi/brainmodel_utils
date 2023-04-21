@@ -195,7 +195,7 @@ class ModelFeaturesPipeline:
         )
 
     def _postproc_features(self, features, **kwargs):
-        pass
+        return features
 
     def get_model_features(self, stimuli, **kwargs):
         # setting seed for untrained models
