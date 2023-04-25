@@ -216,6 +216,7 @@ def agg_results(res, mode="test", metric="r_xy_n_sb"):
         sem(agg_res.data, nan_policy="omit"),
     )
 
+
 def weighted_sem(data, weights=None, ddof=None):
     """
     Calculate the standard error of the mean (SEM) for the given data, with
@@ -299,7 +300,7 @@ def weighted_sem(data, weights=None, ddof=None):
         if ddof is None:
             ddof = 1
 
-        weights = np.ones(n)/n
+        weights = np.ones(n) / n
     else:
         if ddof is None:
             ddof = 0
@@ -308,7 +309,7 @@ def weighted_sem(data, weights=None, ddof=None):
         raise ValueError("Data and weights must have the same length.")
 
     weighted_mean = np.average(data, weights=weights)
-    variance = np.average((data - weighted_mean)**2, weights=weights)
+    variance = np.average((data - weighted_mean) ** 2, weights=weights)
     sum_weights = np.sum(weights)
     effective_sample_size = (sum_weights ** 2) / np.sum(weights ** 2)
 
