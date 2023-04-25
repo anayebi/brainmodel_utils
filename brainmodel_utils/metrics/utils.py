@@ -215,3 +215,103 @@ def agg_results(res, mode="test", metric="r_xy_n_sb"):
         agg_res.median(dim="units", skipna=True).data,
         sem(agg_res.data, nan_policy="omit"),
     )
+
+def weighted_sem(data, weights=None, ddof=None):
+    """
+    Calculate the standard error of the mean (SEM) for the given data, with
+    optional weights and degrees of freedom (ddof) adjustment.
+
+    Parameters
+    ----------
+    data : array_like
+        An array of the data points.
+    weights : array_like, optional
+        An array of weights for the data points. If None, equal weights are
+        assumed for all data points (unweighted case). Default is None.
+    ddof : int, optional
+        Degrees of freedom adjustment. If not specified, it defaults to 1 for
+        the unweighted case and 0 for the weighted case. Default is None.
+
+    Returns
+    -------
+    float
+        The standard error of the mean.
+
+    Notes
+    -----
+    The standard error of the mean (SEM) is calculated using the general
+    weighted formula:
+
+        weighted_variance = average((data - weighted_mean)**2, weights=weights)
+        sum_weights = sum(weights)
+        effective_sample_size = (sum_weights ** 2) / sum(weights ** 2)
+        weighted_sem = sqrt(weighted_variance / (effective_sample_size - ddof))
+
+    where weighted_mean is the mean of the data with weights, and
+    effective_sample_size is an estimate of the degrees of freedom based on
+    the sum of the weights.
+
+    If weights is None (unweighted case), equal weights are assumed for all
+    data points. It is suggested to use ddof=1 for the unweighted case, which
+    matches the behavior of scipy.stats.sem() with ddof=1.
+
+    In the weighted case, it is suggested to use ddof=0, as there isn't a
+    widely accepted standard for applying degrees of freedom in weighted data.
+
+    The concept of degrees of freedom doesn't have a clear or widely accepted
+    equivalent in the weighted case. In this implementation, we use the
+    effective sample size to account for the degrees of freedom when ddof is
+    provided. Keep in mind that this is not a widely adopted standard, and it
+    may not be appropriate for all cases or applications.
+
+    This is for several reasons:
+
+    1. Different interpretations of weights: Weights can represent various aspects of the data,
+       such as the importance, reliability, or frequency of the observations. The meaning of
+       weights can vary depending on the context, which makes it challenging to establish a
+       single, widely accepted standard for dealing with ddof in weighted data.
+
+    2. Different objectives: When working with weighted data, the objectives may vary across
+       applications. Some applications might emphasize the accuracy of the estimated mean, while
+       others might prioritize minimizing the estimation variance. These different objectives can
+       lead to different approaches to handling ddof in weighted data.
+
+    3. Lack of an established consensus: In the unweighted case, the concept of degrees of freedom
+       is well-understood and has a clear interpretation as the number of independent pieces of
+       information that go into the estimation of a parameter (e.g., the mean). In the context of
+       calculating variance or standard error, ddof is typically set to 1 to account for the
+       degrees of freedom being "used" by estimating the mean. However, there isn't an established
+       consensus on how to apply or adjust degrees of freedom in the weighted case. The concept of
+       effective sample size has been proposed as an alternative, but it is not a widely adopted
+       standard.
+
+    Given these challenges, it's difficult to create a single, widely accepted standard for handling
+    degrees of freedom in weighted data. As a result, different approaches and assumptions might be
+    used depending on the specific problem and the goals of the analysis. In some cases, it might be
+    appropriate to set ddof to zero, whereas in other cases, you might want to experiment with different
+    ddof values or use alternative methods for handling degrees of freedom.
+    """
+
+    n = len(data)
+
+    # if unweighted, either there are no weights passed in, or they are equal
+    if (weights is None) or (len(np.unique(weights)) == 1):
+        if ddof is None:
+            ddof = 1
+
+        weights = np.ones(n)/n
+    else:
+        if ddof is None:
+            ddof = 0
+
+    if len(data) != len(weights):
+        raise ValueError("Data and weights must have the same length.")
+
+    weighted_mean = np.average(data, weights=weights)
+    variance = np.average((data - weighted_mean)**2, weights=weights)
+    sum_weights = np.sum(weights)
+    effective_sample_size = (sum_weights ** 2) / np.sum(weights ** 2)
+
+    weighted_sem = np.sqrt(variance / (effective_sample_size - ddof))
+
+    return weighted_sem
