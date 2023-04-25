@@ -300,7 +300,8 @@ def weighted_sem(data, weights=None, ddof=None):
         if ddof is None:
             ddof = 1
 
-        weights = np.ones(n) / n
+        if weights is None:
+            weights = np.ones(n) / n
     else:
         if ddof is None:
             ddof = 0
