@@ -240,6 +240,9 @@ def weighted_sem(data, weights=None, ddof=None):
 
     Notes
     -----
+    This code was derived from interactions with GPT-4, and unit tested by me
+    to ensure it matches `scipy.stats.sem()` in the unweighted/uniform weighted case.
+
     The standard error of the mean (SEM) is calculated using the general
     weighted formula:
 
