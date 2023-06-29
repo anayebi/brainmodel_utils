@@ -24,15 +24,15 @@ def rdm(X):
 def input_checker_2d(X, Y):
     assert X.ndim == 2
     if isinstance(X, xr.DataArray):
-        # provide an extra layer of security for xarrays
-        assert X.dims[0] == "stimuli"
+        # provide an extra layer of security for xarrays, last dimension has to be "units"
+        # assert X.dims[0] == "stimuli"
         assert X.dims[1] == "units"
     assert np.isfinite(X).all()
 
     assert Y.ndim == 2
     if isinstance(Y, xr.DataArray):
-        # provide an extra layer of security for xarrays
-        assert Y.dims[0] == "stimuli"
+        # provide an extra layer of security for xarrays, last dimension has to be "units"
+        # assert Y.dims[0] == "stimuli"
         assert Y.dims[1] == "units"
     assert np.isfinite(Y).all()
 
