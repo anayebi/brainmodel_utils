@@ -38,9 +38,13 @@ def get_consistency_per_neuron(X, Y, X1, X2, Y1, Y2, metric="pearsonr"):
     r_yy = metric_func(Y1, Y2)[0]
     r_yy_sb = sb_correction(r_yy)
 
-    denom_sb = (r_xx_sb * r_yy_sb) ** 0.5
-
-    r_xy_n_sb = r_xy / denom_sb
+    # if statement to supress warning, since metric is undefined when r_xx_sb*r_yy_sb is negative
+    if r_xx_sb * r_yy_sb < 0:
+        r_xy_n_sb = np.NAN
+        denom_sb = np.NAN
+    else:
+        denom_sb = (r_xx_sb * r_yy_sb) ** 0.5
+        r_xy_n_sb = r_xy / denom_sb
 
     reg_metrics = {
         "r_xy_n_sb": r_xy_n_sb,
@@ -55,7 +59,16 @@ def get_consistency_per_neuron(X, Y, X1, X2, Y1, Y2, metric="pearsonr"):
 
 
 def get_linregress_consistency_persplit(
-    X, Y, X1, X2, Y1, Y2, map_kwargs, train_idx, test_idx, metric="pearsonr",
+    X,
+    Y,
+    X1,
+    X2,
+    Y1,
+    Y2,
+    map_kwargs,
+    train_idx,
+    test_idx,
+    metric="pearsonr",
 ):
     assert "rsa" not in metric
     if map_kwargs is None:
@@ -152,7 +165,6 @@ def get_linregress_consistency_persphalftrial(
     metric="pearsonr",
     sphseed=0,
 ):
-
     if source.ndim == 3:
         X = generic_trial_avg(source)
     else:
@@ -214,7 +226,6 @@ def get_linregress_consistency(
     start_seed=1234,
     **kwargs
 ):
-
     """
     The main function for computing the linear regression consistency (noise corrected)
     between source and target.

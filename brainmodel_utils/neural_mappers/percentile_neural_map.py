@@ -1,5 +1,11 @@
 import numpy as np
 import sklearn.linear_model as lm
+import torch
+
+cuda_avail = 0
+if torch.cuda.is_available():
+    cuda_avail = 1
+    device = torch.device("cuda:0")
 
 from . import neural_map_base as nm
 
@@ -51,16 +57,36 @@ class PercentileNeuralMap(nm.NeuralMapBase):
         assert X.shape[0] == Y.shape[0]
         assert self._n_targets is not None
 
-        # First, remove column means
-        X_ = X - X.mean(axis=0)
-        Y_ = Y - Y.mean(axis=0)
+        # if GPU is availible, use it
+        if cuda_avail:
+            print("Using GPU...")
 
-        # Second, normalize each column vector to norm 1
-        X_ = X_ / np.linalg.norm(X_, axis=0)
-        Y_ = Y_ / np.linalg.norm(Y_, axis=0)
+            # Convert numpy arrays to PyTorch tensors on GPU
+            X_torch = torch.tensor(X.values, device=device).float()
+            Y_torch = torch.tensor(Y.values, device=device).float()
 
-        # Now compute dot product = Pearson correlation
-        self._corrs = np.dot(X_.T, Y_)  # (source, target)
+            # First, remove column means
+            X_torch_ = X_torch - X_torch.mean(dim=0)
+            Y_torch_ = Y_torch - Y_torch.mean(dim=0)
+
+            # Second, normalize each column vector to norm 1
+            X_torch_ = X_torch_ / torch.linalg.norm(X_torch_, dim=0)
+            Y_torch_ = Y_torch_ / torch.linalg.norm(Y_torch_, dim=0)
+
+            self._corrs = torch.mm(X_torch, Y_torch).detach().cpu().numpy()
+
+            print(self._corrs)
+        else:
+            # First, remove column means
+            X_ = X - X.mean(axis=0)
+            Y_ = Y - Y.mean(axis=0)
+
+            # Second, normalize each column vector to norm 1
+            X_ = X_ / np.linalg.norm(X_, axis=0)
+            Y_ = Y_ / np.linalg.norm(Y_, axis=0)
+
+            # Now compute dot product = Pearson correlation
+            self._corrs = np.dot(X_.T, Y_)  # (source, target)
 
     def fit(self, X, Y):
         """
@@ -93,7 +119,6 @@ class PercentileNeuralMap(nm.NeuralMapBase):
         self._mappers = list()
         self._num_source_units = list()
         for i in range(self._n_targets):
-
             source_idxs = self._get_sources(i)
             assert source_idxs.shape[0] == self._n_source
             source_features = X[:, source_idxs]
