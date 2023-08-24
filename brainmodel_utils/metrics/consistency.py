@@ -13,6 +13,8 @@ from brainmodel_utils.metrics.utils import (
 from brainmodel_utils.neural_mappers import PipelineNeuralMap
 from brainmodel_utils.neural_mappers.utils import generate_train_test_splits
 
+import time
+
 
 def sb_correction(r):
     # spearman brown correction for split halves
@@ -224,7 +226,7 @@ def get_linregress_consistency(
     num_bootstrap_iters=1000,
     num_parallel_jobs=1,
     start_seed=1234,
-    **kwargs
+    **kwargs,
 ):
     """
     The main function for computing the linear regression consistency (noise corrected)
@@ -249,7 +251,7 @@ def get_linregress_consistency(
             target=target,
             map_kwargs=map_kwargs,
             sphseed=sphseed,
-            **kwargs
+            **kwargs,
         )
         for sphseed in range(start_seed, start_seed + num_bootstrap_iters)
     )
